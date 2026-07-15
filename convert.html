@@ -6,6 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
 <title>公众号图文助手</title>
 <style>
   :root{
@@ -220,6 +221,8 @@
   const REPLACE_IMG_EPBOX_LAST = `<section style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);outline: 0px;text-align: center;" >
 		<img alt="图片" class="rich_pages wxw-img" data-aistatus="1" data-backh="301" data-backw="562" data-imgfileid="100012834" data-s="300,640" src="https://mmbiz.qpic.cn/sz_mmbiz_jpg/OXIPS079n3lMo9QuRI5t6RvuE5OmR4icsk0KszsOdXruIGe4ic8vWLAMQ8Rsbw2AibTlicJy9oKQqsEwvDvrTC2VrQ/640?wx_fmt=other&&tp=webp&wxfrom=10005&wx_lazy=1#imgIndex=18" data-type="jpeg" data-width="444px" style="-webkit-tap-highlight-color: transparent;outline: 0px;vertical-align: baseline;letter-spacing: 0.034em;width: 677px !important;visibility: visible !important;box-sizing:border-box;font-family:mp-quote, -apple-system-font, BlinkMacSystemFont, Arial, sans-serif;" title="壹站收公众号二维码关注.jpg" width="444" data-ratio="0.5351851851851852" data-w="1080"/>
 	</section>`;
+  // 壹站收 B端 3号文章位（idx=2）粘贴时，替换最后一张图
+  const REPLACE_IMG_YZS_B3_LAST = `<img src="https://mmecoa.qpic.cn/mmecoa_jpg/pBoA3GFiaC5dKuXvlKoBaorZHotCW7o4XcVWaz6CeZR5kYdfx828Ybqicf6orI3mIE9iat6XbIKBR9LXUoAd1DpwibjMfUXVjvqc0ABS5TVlvwI/640?wx_fmt=jpeg&from=appmsg" class="rich_pages wxw-img" data-s="300,640" data-type="jpeg" style="outline:0px;text-align:center;font-size:17px;letter-spacing:0.034em;width:100%;vertical-align:baseline;visibility:visible !important;box-sizing:border-box;max-width:100% !important;font-family:mp-quote, -apple-system-font, BlinkMacSystemFont, Arial, sans-serif;" data-croporisrc="https://mmecoa.qpic.cn/mmecoa_jpg/pBoA3GFiaC5dKuXvlKoBaorZHotCW7o4XcVWaz6CeZR5kYdfx828Ybqicf6orI3mIE9iat6XbIKBR9LXUoAd1DpwibjMfUXVjvqc0ABS5TVlvwI/0?wx_fmt=jpeg&amp;from=appmsg" data-cropselx1="0" data-cropselx2="578" data-cropsely1="0" data-cropsely2="392" data-imgfileid="100006304" data-aistatus="1" data-ratio="0.6777777777777778" data-w="1080"/>`;
   // 粘贴时自动替换规则（按 账号名 + 文章位 匹配）
   const TRANSFORMS = [
     {
@@ -239,6 +242,12 @@
       articleIdx: [0],                    // 1号文章位
       colorFrom: '#006fff', colorTo: '#00b050',
       firstImg: REPLACE_IMG_EPBOX_FIRST, lastImg: null
+    },
+    {
+      accounts: ['壹站收B端'],
+      articleIdx: [2],                    // 3号文章位（仅壹站收B端）
+      colorFrom: null, colorTo: null,
+      firstImg: null, lastImg: REPLACE_IMG_YZS_B3_LAST
     }
   ];
   const DEFAULT_ACCOUNTS = [
