@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>公众号图文助手</title>
+<style>
+  :root{
+    --bg:#f5f5f7;
+    --surface:#ffffff;
+    --text:#2c2c2e;
+    --sub:#6e6e73;
+    --muted:#a1a1a6;
+    --ok:#34c759;
+    --ok-soft:#e8faef;
+    --blue:#007aff;
+    --blue-soft:#f0f7ff;
+    --danger:#ff3b30;
+    --danger-soft:#fff0ef;
+    --border:#e8e8ed;
+    --line:#f0f0f2;
+    --radius:22px;
+    --card-radius:22px;
+    --pill-radius:100px;
+    --shadow:0 1px 3px rgba(0,0,0,.04),0 8px 32px rgba(0,0,0,.06);
+    --shadow-hover:0 1px 3px rgba(0,0,0,.04),0 12px 40px rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Helvetica Neue",sans-serif;
+    background:var(--bg); color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+    display:flex; flex-direction:column;
+    font-weight:400;
+    letter-spacing:-.15px;
+  }
+
+  header{
+    flex:none; height:60px; padding:0 32px;
+    display:flex; align-items:center; gap:14px;
+    background:rgba(255,255,255,.72);
+    backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    border-bottom:1px solid rgba(0,0,0,.06); z-index:20;
+  }
+  header .logo{font-size:17px; font-weight:600; letter-spacing:-.3px; color:var(--text);}
+  header .logo .dot{
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    background:var(--blue); margin-right:9px; vertical-align:middle; box-shadow:0 0 0 2px rgba(0,122,255,.15);
+  }
+  header .grow{flex:1;}
+  .btn{
+    border:none; border-radius:var(--pill-radius); cursor:pointer; font-family:inherit;
+    padding:8px 18px; font-size:13px; font-weight:400;
+    background:var(--surface); color:var(--text); border:1px solid var(--border);
+    transition:all .18s ease; white-space:nowrap; flex-shrink:0;
+  }
+  .btn:hover{background:var(--bg); transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .btn:active{transform:translateY(0);}
+  .btn-primary{color:#fff; border-color:var(--blue); background:var(--blue); box-shadow:0 1px 4px rgba(0,122,255,.25);}
+  .btn-primary:hover{background:#0068d8; transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,122,255,.3);}
+  .btn-ghost{border-color:transparent; background:transparent; color:var(--sub);}
+  .btn-ghost:hover{background:rgba(0,0,0,.04); color:var(--text); transform:translateY(-1px);}
+  .btn-danger{border-color:transparent; background:transparent; color:var(--danger);}
+  .btn-danger:hover{background:var(--danger-soft); transform:translateY(-1px);}
+  .btn-sm{padding:5px 13px; font-size:12px;}
+
+  .board{
+    flex:1; position:relative; overflow-y:auto; overflow-x:hidden;
+    padding:32px 32px 60px;
+  }
+  .board::-webkit-scrollbar{width:8px;}
+  .board::-webkit-scrollbar-track{background:transparent;}
+  .board::-webkit-scrollbar-thumb{background:#d2d2d7; border-radius:4px; border:2px solid transparent; background-clip:padding-box;}
+  .board::-webkit-scrollbar-thumb:hover{background:#b0b0b5;}
+  #accounts{
+    display:flex; flex-direction:row; gap:28px;
+    align-items:flex-start; max-width:1200px; margin:0 auto;
+  }
+  .group{
+    flex:1; min-width:0; display:flex; flex-direction:column; gap:28px;
+  }
+  .card{
+    width:100%;
+    display:flex; flex-direction:column;
+    background:var(--surface); border-radius:var(--card-radius);
+    box-shadow:var(--shadow); padding:24px;
+    transition:box-shadow .3s ease, transform .3s ease;
+    border:1px solid rgba(0,0,0,.04);
+  }
+  .card:hover{box-shadow:var(--shadow-hover); transform:translateY(-1px);}
+  .empty-state{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    color:var(--sub); font-size:15px; text-align:center; display:none; font-weight:400;
+  }
+
+  .acc-head{
+    display:flex; align-items:center; gap:12px;
+    padding:0 4px 16px; border-bottom:1px solid var(--line); margin-bottom:16px;
+  }
+  .acorder{
+    width:28px; height:28px; border-radius:50%; background:var(--text); color:#fff;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:600; flex:none; letter-spacing:-.2px;
+  }
+  .acc-name{
+    flex:1; min-width:0; background:transparent; border:none;
+    font-size:16px; font-weight:600; font-family:inherit; color:var(--text); letter-spacing:-.2px;
+  }
+  .acc-name:focus{outline:none;}
+  .acc-name::placeholder{color:var(--muted);}
+  .del-acc{
+    border:none; background:transparent; color:var(--sub); font-size:12px;
+    cursor:pointer; padding:5px 8px; border-radius:8px; white-space:nowrap; flex-shrink:0; transition:.15s;
+  }
+  .del-acc:hover{color:var(--danger); background:var(--danger-soft);}
+
+  .articles{
+    flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px;
+    margin-bottom:12px; padding-right:2px;
+  }
+  .article{
+    position:relative;
+    background:var(--surface); border-radius:16px; padding:14px 16px; flex:none;
+    border:1px solid var(--border); transition:all .2s ease;
+  }
+  .article:hover{border-color:#d2d2d7; box-shadow:0 2px 8px rgba(0,0,0,.04);}
+  .article.filled{background:var(--ok-soft); border-color:rgba(52,199,89,.2);}
+  .extra-wrap{margin-top:12px; border-top:1px solid var(--line); padding-top:12px;}
+  .extra-label{font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:400; letter-spacing:.2px;}
+  .extra-ta{width:100%; min-height:64px; resize:vertical; border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-size:12px; font-family:inherit; line-height:1.5; box-sizing:border-box; outline:none; transition:border-color .15s; color:var(--text); background:var(--bg);}
+  .extra-ta:focus{border-color:var(--blue); background:var(--surface);}
+  .art-del{
+    position:absolute; top:10px; right:12px;
+    width:20px; height:20px; border-radius:50%;
+    border:none; background:transparent; color:var(--muted);
+    font-size:12px; line-height:1; cursor:pointer; padding:0;
+    display:inline-flex; align-items:center; justify-content:center; transition:.15s;
+  }
+  .art-del:hover{background:var(--danger-soft); color:var(--danger);}
+
+  .art-row{
+    display:flex; align-items:center; gap:10px; white-space:nowrap; flex-wrap:nowrap;
+    padding-right:2px; position:relative;
+  }
+  .aorder{
+    width:20px; height:20px; border-radius:50%; background:var(--line); color:var(--sub);
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:600; flex:none; transition:all .2s ease;
+  }
+  .article.filled .aorder{background:var(--ok); color:#fff;}
+  .art-actions{
+    flex:0 0 auto; display:flex; align-items:center; gap:6px;
+    white-space:nowrap; flex-wrap:nowrap;
+  }
+  .art-actions .btn{
+    width:52px; padding-left:0; padding-right:0; text-align:center; justify-content:center;
+  }
+  .a-status{
+    font-size:12px; color:var(--sub); white-space:nowrap; flex-shrink:0;
+    margin-left:auto; padding-right:4px; font-weight:400;
+  }
+  .article.filled .a-status{color:var(--ok);}
+  textarea{
+    width:100%; background:var(--bg); border:1px solid var(--border); border-radius:12px;
+    padding:12px; font-size:12px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    resize:vertical; min-height:80px; color:var(--text); margin-top:12px;
+    transition:border-color .15s, background .15s;
+  }
+  textarea:focus{outline:none; border-color:var(--blue); background:var(--surface);}
+  .add-art{
+    width:100%; padding:12px; border-radius:16px; border:1.5px dashed var(--border);
+    background:transparent; color:var(--sub); font-size:13px; font-weight:500;
+    cursor:pointer; transition:all .2s ease; font-family:inherit; margin-top:4px;
+  }
+  .add-art:hover{border-color:var(--blue); color:var(--blue); background:var(--blue-soft); transform:translateY(-1px);}
+
+  .toast{
+    position:fixed; left:50%; bottom:32px; transform:translateX(-50%) translateY(20px);
+    background:rgba(29,29,31,.9); color:#fff; padding:12px 22px; border-radius:14px;
+    font-size:13px; opacity:0; pointer-events:none; transition:.3s cubic-bezier(.25,.46,.45,.94); z-index:50; white-space:nowrap; font-weight:400; letter-spacing:.2px; box-shadow:0 8px 24px rgba(0,0,0,.15);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span class="dot"></span>公众号图文助手</div>
+  <div class="grow"></div>
+  <button class="btn btn-sm btn-ghost" id="btnClearAll">清空全部</button>
+</header>
+
+<div class="board">
+  <div id="accounts"></div>
+  <div id="empty" class="empty-state">还没有公众号</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const KEY = 'wx_conv_state_v5';
+  const TAIL_KHJ_B3 = `<img src="https://mmbiz.qpic.cn/mmbiz_jpg/90ZeFj5fwqI7FppM2Eb1atAVsl8PH1jVhtpO37iaqg2lpZb08UYj1qc79ttlXpz5V7vZc000IoxQOyKJ4qAqYvw/640?wx_fmt=jpeg&from=appmsg" class="rich_pages wxw-img" data-s="300,640" data-type="jpeg" style="vertical-align: baseline;width: 100%;box-sizing:border-box;max-width:100% !important;" data-croporisrc="https://mmbiz.qpic.cn/mmbiz_jpg/90ZeFj5fwqI7FppM2Eb1atAVsl8PH1jVhtpO37iaqg2lpZb08UYj1qc79ttlXpz5V7vZc000IoxQOyKJ4qAqYvw/0?wx_fmt=jpeg&amp;from=appmsg" data-cropselx1="0" data-cropselx2="538" data-cropsely1="0" data-cropsely2="370" data-imgfileid="100006049" data-aistatus="1" data-ratio="0.687962962962963" data-w="1080"/>`;
+  // 壹站收 C端/B端：1号、2号文章位粘贴时，替换颜色并替换第一张图
+  const REPLACE_IMG_YZS = `<section style="text-align:center;" >
+				<img src="https://mmbiz.qpic.cn/mmbiz_gif/lfic4S7GicgmD0Ot7hgOUpfofRwogPQoaTUSkOXicuTWeETNsjdZWSyQflaVfKqAo0zakN2K0ia7PBuxj8FfG4XHNQ/640?wx_fmt=gif" style="width:100%;vertical-align:baseline;box-sizing:border-box;max-width:100% !important;" draggable="false" data-ratio="0.20055710306406685" data-w="1077"/>
+			</section>`;
+  // EPBox C端/B端：2号文章位（idx=1）粘贴时，替换第一张图与最后一张图
+  const REPLACE_IMG_EPBOX_FIRST = `<section style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);margin-right: 8px;margin-left: 8px;outline: 0px;letter-spacing: 0.578px;text-align: center;visibility: visible;" >
+		<img alt="壹站收旧头图.gif" class="rich_pages wxw-img __bg_gif" data-aistatus="1" data-backh="86" data-backw="428" data-imgfileid="0" src="https://mmecoa.qpic.cn/mmecoa_gif/FXsTibdz1tAFVoibkXqmTQ0yh4YTYvCKhYhqsMzffYx3kruIQGNbXKTIaqPedpOLbyqgClBzGoyu0sVGWicuqwheKDpLibrsIeDlicZqktvepJps/640?wx_fmt=gif&from=appmsg&tp=webp&wxfrom=10005&wx_lazy=1#imgIndex=0" data-type="gif" data-width="428px" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);outline: 0px;vertical-align: baseline;width: 661px !important;visibility: visible !important;box-sizing:border-box;" title="壹站收旧头图.gif" width="428" data-ratio="0.20093023255813955" data-w="1075"/>
+	</section>`;
+  const REPLACE_IMG_EPBOX_LAST = `<section style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);outline: 0px;text-align: center;" >
+		<img alt="图片" class="rich_pages wxw-img" data-aistatus="1" data-backh="301" data-backw="562" data-imgfileid="100012834" data-s="300,640" src="https://mmbiz.qpic.cn/sz_mmbiz_jpg/OXIPS079n3lMo9QuRI5t6RvuE5OmR4icsk0KszsOdXruIGe4ic8vWLAMQ8Rsbw2AibTlicJy9oKQqsEwvDvrTC2VrQ/640?wx_fmt=other&&tp=webp&wxfrom=10005&wx_lazy=1#imgIndex=18" data-type="jpeg" data-width="444px" style="-webkit-tap-highlight-color: transparent;outline: 0px;vertical-align: baseline;letter-spacing: 0.034em;width: 677px !important;visibility: visible !important;box-sizing:border-box;font-family:mp-quote, -apple-system-font, BlinkMacSystemFont, Arial, sans-serif;" title="壹站收公众号二维码关注.jpg" width="444" data-ratio="0.5351851851851852" data-w="1080"/>
+	</section>`;
+  // 粘贴时自动替换规则（按 账号名 + 文章位 匹配）
+  const TRANSFORMS = [
+    {
+      accounts: ['壹站收C端', '壹站收B端'],
+      articleIdx: [0, 1],                 // 1号=0，2号=1（3号=2 不处理）
+      colorFrom: '#006fff', colorTo: '#00b050',
+      firstImg: REPLACE_IMG_YZS, lastImg: null
+    },
+    {
+      accounts: ['EPBox C端'],
+      articleIdx: [1],                    // 2号文章位
+      colorFrom: null, colorTo: null,
+      firstImg: REPLACE_IMG_EPBOX_FIRST, lastImg: REPLACE_IMG_EPBOX_LAST
+    },
+    {
+      accounts: ['EPBox C端'],
+      articleIdx: [0],                    // 1号文章位
+      colorFrom: '#006fff', colorTo: '#00b050',
+      firstImg: REPLACE_IMG_EPBOX_FIRST, lastImg: null
+    }
+  ];
+  const DEFAULT_ACCOUNTS = [
+    { name:'酷换机C端', n:3 },
+    { name:'酷换机B端', n:3, tails:{ 2: TAIL_KHJ_B3 } },
+    { name:'壹站收C端', n:3 },
+    { name:'壹站收B端', n:3 },
+    { name:'EPBox C端', n:2 },
+  ];
+  // 指定位置「复原」：这些 (账号, 文章位) 走 v28 之前的清洗（只删开头空块，保留图片间原有空行/间距）；其余位置用 v28 去空块
+  // 文章位为 0-based：3号=2，2号=1
+  const REVERT_CLEAN = {
+    '酷换机C端': [2],   // 3号推文位
+    '酷换机B端': [2],   // 3号推文位
+    '壹站收C端': [2],   // 3号推文位
+    '壹站收B端': [2],   // 3号推文位
+    'EPBox C端': [1],   // 2号推文位
+  };
+  const accountsEl = document.getElementById('accounts');
+  const emptyEl = document.getElementById('empty');
+  const toastEl = document.getElementById('toast');
+
+  function el(tag, cls){ const e = document.createElement(tag); if (cls) e.className = cls; return e; }
+  function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(()=>toastEl.classList.remove('show'), 2000); }
+
+  let saveTimer;
+  function buildStateData(){
+    return [...accountsEl.querySelectorAll('.account')].map(acc => ({
+      name: acc.querySelector('.acc-name').value.trim(),
+      articles: [...acc.querySelectorAll('.article')].map(ar => ({
+        title: '',
+        html: ar.querySelector('textarea').value,
+        tailImg: ar.dataset.tailImg || '',
+        extraHtml: (ar.querySelector('.extra-ta') ? ar.querySelector('.extra-ta').value : '')
+      }))
+    }));
+  }
+  function saveNow(){
+    try { localStorage.setItem(KEY, JSON.stringify(buildStateData())); }
+    catch (e) { toast('本地保存空间不足，本次内容未自动保存'); }
+  }
+  function save(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveNow, 500);
+  }
+
+  function updateStatus(ar){
+    const ta = ar.querySelector('textarea');
+    const len = ta.value.trim().length;
+    const st = ar.querySelector('.a-status');
+    if (len > 0){
+      ar.classList.add('filled');
+      const kb = (len/1024).toFixed(1);
+      st.textContent = '✓ ' + kb + ' KB';
+    } else {
+      ar.classList.remove('filled');
+      st.textContent = '待粘贴';
+    }
+  }
+
+  function flash(btn, text){
+    const old = btn.textContent; btn.textContent = text;
+    setTimeout(() => { btn.textContent = old; }, 1400);
+  }
+
+  function getCleanHtml(ar){ return ar.querySelector('textarea').value; }
+
+  // 复制前清洗：去首尾空白；仅剥离最外层容器的「限宽与居中」（保留字体/颜色/行距等全部排版样式）
+  // legacy=true 时（指定位置复原）：只删开头空块，保留图片/文字间原有空行与间距（v28 之前行为）
+  function cleanForWeChat(html, legacy){
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const body = doc.body;
+
+    // 1) 去首尾空白文本节点
+    while (body.firstChild && body.firstChild.nodeType === 3 && !body.firstChild.nodeValue.trim()) body.removeChild(body.firstChild);
+    while (body.lastChild && body.lastChild.nodeType === 3 && !body.lastChild.nodeValue.trim()) body.removeChild(body.lastChild);
+
+    if (legacy){
+      // 复原模式（指定位置）：只删开头空块，保留图片/文字间原有空行与间距（v28 之前行为）
+      let fc = body.firstElementChild;
+      while (fc && /^(p|br|div|section)$/i.test(fc.tagName) && !fc.textContent.trim() && !fc.querySelector('img,svg')){
+        const nx = fc.nextElementSibling; fc.remove(); fc = nx;
+      }
+    } else {
+      // 默认模式（v28）：删除全文所有「纯空块」（仅含 <br> 或无内容的 <p>/<div>/<section>），消除图片/文字间的多余空行
+      //    保护规则：含图片/视频/音频/表格等有意义内容的不删；含可见文字（含 &nbsp;）的不删
+      let changed = true;
+      while (changed){
+        changed = false;
+        body.querySelectorAll('p, div, section').forEach(el => {
+          if (el.querySelector('img, svg, video, iframe, audio, canvas, table, ol, ul')) return;
+          if (el.textContent.trim() !== '') return;
+          el.remove(); changed = true;
+        });
+      }
+    }
+
+    // 2) 剥掉所有顶层容器 style 的 max-width / margin:0 auto（保留字体/颜色/行距等全部排版样式）
+    //    不只处理第一个，避免插入的 <section> 仍带限宽/居中
+    body.querySelectorAll(':scope > section').forEach(root => {
+      const st = root.getAttribute('style') || '';
+      const ns = st.replace(/max-width\s*:\s*[^;]+;?/i,'')
+                   .replace(/margin\s*:\s*0\s+auto\s*;?/i,'')
+                   .replace(/;+/g,';').replace(/^\s*;|;\s*$/g,'');
+      root.setAttribute('style', ns);
+    });
+    return body.innerHTML.trim();
+  }
+
+  // 把「插入新内容」作为兄弟节点放在主文之后；若插入内容有 <section> 根节点，改为 <div> 保留 style，避免微信编辑器对 <section> 的过滤
+  function mergeExtra(mainHtml, extraHtml){
+    const doc = new DOMParser().parseFromString(mainHtml, 'text/html');
+    const extraDoc = new DOMParser().parseFromString(extraHtml, 'text/html');
+    // 微信编辑器不支持 <div> 的 background，但对 <section> 的 background-color 支持良好
+    // 自动把带 background 的 <div> 转为 <section>，保留其他所有样式
+    extraDoc.querySelectorAll('div').forEach(div => {
+      const style = div.getAttribute('style') || '';
+      if (/background\s*:/i.test(style)){
+        const section = extraDoc.createElement('section');
+        const newStyle = style.replace(/background\s*:\s*([^;]+);?/i, 'background-color: $1;');
+        section.setAttribute('style', newStyle);
+        [...div.childNodes].forEach(n => section.appendChild(n.cloneNode(true)));
+        div.replaceWith(section);
+      }
+    });
+    const extraRoot = extraDoc.body.firstElementChild;
+    if (extraRoot){
+      doc.body.appendChild(extraRoot.cloneNode(true));
+    } else {
+      [...extraDoc.body.childNodes].forEach(n => doc.body.appendChild(n.cloneNode(true)));
+    }
+    return doc.body.innerHTML.trim();
+  }
+
+  function applyTail(ar){
+    const t = ar.dataset.tailImg;
+    if (!t || !t.trim()) return;
+    const ta = ar.querySelector('textarea');
+    const div = document.createElement('div');
+    div.innerHTML = ta.value;
+    const imgs = div.querySelectorAll('img');
+    if (!imgs.length) return;
+    const last = imgs[imgs.length - 1];
+    const tdiv = document.createElement('div');
+    tdiv.innerHTML = t.trim();
+    const tnode = tdiv.querySelector('img');
+    if (tnode) last.replaceWith(tnode);
+    else last.outerHTML = t.trim();
+    ta.value = div.innerHTML;
+  }
+
+  function makeNode(htmlStr){
+    const d = document.createElement('div');
+    d.innerHTML = htmlStr.trim();
+    return d.firstElementChild || d;
+  }
+
+  function applyTransform(ar){
+    const acc = ar.closest('.account');
+    if (!acc) return;
+    const accName = acc.querySelector('.acc-name').value.trim();
+    const idx = [...acc.querySelectorAll('.article')].indexOf(ar);
+
+    TRANSFORMS.forEach(cfg => {
+      if (!cfg.accounts.includes(accName)) return;
+      if (!cfg.articleIdx.includes(idx)) return;
+
+      const ta = ar.querySelector('textarea');
+      let html = ta.value;
+      // 1) 替换颜色（可选）
+      if (cfg.colorFrom) html = html.replace(new RegExp(cfg.colorFrom, 'gi'), cfg.colorTo);
+      // 2) 替换第一张图 / 最后一张图
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      let imgs = div.querySelectorAll('img');
+      const single = imgs.length === 1;
+      if (cfg.firstImg && imgs.length){ imgs[0].replaceWith(makeNode(cfg.firstImg)); }
+      if (cfg.lastImg && imgs.length){
+        const cur = div.querySelectorAll('img');
+        const lastNode = cur[cur.length - 1];
+        // 内容只有一张图且已被 firstImg 替换过，则不再重复替换
+        if (lastNode && !(single && cfg.firstImg)) lastNode.replaceWith(makeNode(cfg.lastImg));
+      }
+      html = div.innerHTML.trim();
+      ta.value = html;
+    });
+  }
+
+  async function pasteArticle(ar){
+    const ta = ar.querySelector('textarea');
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim()){ toast('剪贴板为空'); return; }
+      ta.value = text.trim(); ta.hidden = true;
+      applyTail(ar);
+      applyTransform(ar);
+      updateStatus(ar); save();
+      flash(ar.querySelector('[data-act="paste"]'), '✓');
+      toast('已粘贴，点「复制」去后台 Ctrl+V');
+    } catch (e) {
+      ta.hidden = false; ta.focus();
+      toast('请在此输入框中 Ctrl+V 粘贴');
+    }
+  }
+
+  async function copyArticle(ar){
+    const btn = ar.querySelector('[data-act="copy"]');
+    let html = getCleanHtml(ar);
+    if (!html.trim()){ toast('这篇还没粘贴内容'); return; }
+    // 微信清洗：去首尾空白/空块，去掉最外层容器限宽与居中，保留字体/颜色等样式
+    // 指定「复原」位置走 legacy 模式（保留原有空行），其余位置用 v28 去空块
+    const acc = ar.closest('.account');
+    const accName = acc ? acc.querySelector('.acc-name').value.trim() : '';
+    const idx = acc ? [...acc.querySelectorAll('.article')].indexOf(ar) : -1;
+    const legacy = !!(REVERT_CLEAN[accName] && REVERT_CLEAN[accName].indexOf(idx) !== -1);
+    html = cleanForWeChat(html, legacy);
+    // 「插入新内容」作为子节点追加到主文最外层容器内（保留同一排版上下文）
+    const eta = ar.querySelector('.extra-ta');
+    if (eta && eta.value.trim()){
+      html = mergeExtra(html, eta.value.trim());
+    }
+    const plain = (() => { const t = document.createElement('div'); t.innerHTML = html; return t.innerText || ''; })();
+
+    // 方案一：ClipboardItem 直写 text/html —— 保留远程图片 URL 与内联样式，微信最稳
+    try {
+      await navigator.clipboard.write([ new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([plain], { type: 'text/plain' })
+      })]);
+      flash(btn, '✓'); toast('已复制为微信富文本，去后台 Ctrl+V');
+      return;
+    } catch (e) {}
+
+    // 方案二：contenteditable 选区复制（兜底，非安全上下文时用；远程图片可能丢失）
+    const div = document.createElement('div');
+    div.contentEditable = 'true';
+    div.innerHTML = html;
+    div.style.cssText = 'position:fixed;left:-9999px;top:0;width:10px;height:10px;overflow:hidden;';
+    document.body.appendChild(div);
+    const sel = window.getSelection();
+    const rg = document.createRange();
+    rg.selectNodeContents(div);
+    sel.removeAllRanges();
+    sel.addRange(rg);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    sel.removeAllRanges();
+    document.body.removeChild(div);
+    if (ok){ flash(btn, '✓'); toast('已复制，去后台 Ctrl+V'); }
+    else { toast('复制失败，请手动复制'); }
+  }
+
+  function addArticle(accEl, title, html, tailImg, showExtra, extraHtml){
+    const ar = el('div', 'article');
+    ar.dataset.tailImg = tailImg || '';
+    ar.innerHTML = `
+      <div class="art-row">
+        <span class="aorder"></span>
+        <div class="art-actions">
+          <button class="btn btn-sm btn-ghost" data-act="paste">粘贴</button>
+          <button class="btn btn-sm btn-primary" data-act="copy">复制</button>
+          <button class="btn btn-sm btn-danger" data-act="clear">清除</button>
+        </div>
+        <span class="a-status">待粘贴</span>
+      </div>
+      <textarea hidden></textarea>
+    `;
+    const ta = ar.querySelector('textarea');
+    if (html) ta.value = html;
+
+    // 仅 EPBox C端 1号位显示「插入新内容」面板：输入 HTML，复制时拼到推文末尾
+    if (showExtra){
+      const wrap = el('div', 'extra-wrap');
+      wrap.innerHTML = `
+        <div class="extra-label">插入新内容（追加到推文末尾，点「复制」时一并复制）</div>
+        <textarea class="extra-ta" placeholder="在此粘贴 / 输入要追加在推文末尾的 HTML 源码…"></textarea>
+      `;
+      ar.appendChild(wrap);
+      const eta = wrap.querySelector('.extra-ta');
+      if (extraHtml) eta.value = extraHtml;
+      eta.addEventListener('input', save);
+    }
+
+    ar.querySelector('[data-act="paste"]').addEventListener('click', () => pasteArticle(ar));
+    ar.querySelector('[data-act="copy"]').addEventListener('click', () => copyArticle(ar));
+    ar.querySelector('[data-act="clear"]').addEventListener('click', () => {
+      ta.value = ''; ar.classList.remove('filled'); ta.hidden = true;
+      ar.querySelector('.a-status').textContent = '待粘贴';
+      saveNow(); toast('已清除');
+    });
+
+    accEl.querySelector('.articles').appendChild(ar);
+    updateStatus(ar);
+  }
+
+  function addAccount(name, articles){
+    const acc = el('div', 'account card');
+    acc.innerHTML = `
+      <div class="acc-head">
+        <span class="acorder"></span>
+        <input class="acc-name" placeholder="公众号名称" />
+      </div>
+      <div class="articles"></div>
+    `;
+    if (name) acc.querySelector('.acc-name').value = name;
+    acc.querySelector('.acc-name').addEventListener('input', save);
+
+    accountsEl.appendChild(acc);
+    (articles && articles.length ? articles : [{title:'',html:'',tailImg:''}]).forEach((a, i) => {
+      const showExtra = !!(name && name.trim() === 'EPBox C端' && i === 0);
+      addArticle(acc, a.title, a.html, a.tailImg, showExtra, a.extraHtml || '');
+    });
+    renumber(); updateEmpty();
+  }
+
+  function renumber(){
+    accountsEl.querySelectorAll('.account').forEach((acc, i) => {
+      acc.querySelector('.acorder').textContent = i + 1;
+      acc.querySelectorAll('.article').forEach((ar, j) => { ar.querySelector('.aorder').textContent = j + 1; });
+    });
+  }
+  function relayout(){
+    // 固定列顺序：酷换机(左) → 壹站收(中) → EPBox(右)，每列 C端在上、B端在下
+    const ORDER = ['酷换机C端','酷换机B端','壹站收C端','壹站收B端','EPBox C端'];
+    let accs = [...accountsEl.querySelectorAll('.account')];
+    accs.sort((a, b) => {
+      const na = (a.querySelector('.acc-name').value || '').trim();
+      const nb = (b.querySelector('.acc-name').value || '').trim();
+      const ia = ORDER.indexOf(na), ib = ORDER.indexOf(nb);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    });
+    accountsEl.innerHTML = '';
+    for (let i = 0; i < accs.length; i += 2){
+      const g = el('div', 'group');
+      g.appendChild(accs[i]);
+      if (accs[i + 1]) g.appendChild(accs[i + 1]);
+      accountsEl.appendChild(g);
+    }
+  }
+  function updateEmpty(){
+    const has = accountsEl.querySelectorAll('.account').length > 0;
+    emptyEl.style.display = has ? 'none' : 'block';
+  }
+
+  function applyDefaultTails(){
+    const defMap = {};
+    DEFAULT_ACCOUNTS.forEach(a => { if (a.tails) defMap[a.name] = a.tails; });
+    accountsEl.querySelectorAll('.account').forEach(acc => {
+      const name = acc.querySelector('.acc-name').value.trim();
+      const tails = defMap[name];
+      if (!tails) return;
+      acc.querySelectorAll('.article').forEach((ar, i) => {
+        if (!ar.dataset.tailImg){
+          const t = tails[i];
+          if (t) ar.dataset.tailImg = t;
+        }
+      });
+    });
+    save();
+  }
+
+  document.getElementById('btnClearAll').addEventListener('click', () => {
+    const arts = accountsEl.querySelectorAll('.article');
+    if (!arts.length) return;
+    if (confirm('确定清除所有公众号里已粘贴的文章内容？公众号和文章位置会保留。')) {
+      arts.forEach(ar => {
+        const ta = ar.querySelector('textarea');
+        ta.value = ''; ar.classList.remove('filled'); ta.hidden = true;
+        ar.querySelector('.a-status').textContent = '待粘贴';
+        // 同时清空「插入新内容」面板
+        const eta = ar.querySelector('.extra-ta');
+        if (eta) eta.value = '';
+      });
+      // 清除所有版本 key（包括旧版本），防止旧数据覆盖
+      ['wx_conv_state_v5','wx_conv_state_v4','wx_conv_state_v3','wx_conv_state_v2','wx_conv_state_v1'].forEach(k => {
+        try { localStorage.removeItem(k); } catch(e){}
+      });
+      toast('已清除全部文章内容');
+    }
+  });
+
+  (function load(){
+    // 优先读取当前版本 key（包括空数组），不回退到旧版本——避免「清除全部」后旧数据覆盖
+    const savedByName = {};
+    const currentRaw = localStorage.getItem(KEY);
+    if (currentRaw !== null){
+      try {
+        const arr = JSON.parse(currentRaw);
+        if (Array.isArray(arr)) arr.forEach(acc => { if (acc && acc.name) savedByName[acc.name.trim()] = acc; });
+      } catch(e){}
+    } else {
+      // 当前版本不存在，才回退到旧版本兼容
+      ['wx_conv_state_v4','wx_conv_state_v3','wx_conv_state_v2','wx_conv_state_v1'].forEach(k => {
+        try {
+          const arr = JSON.parse(localStorage.getItem(k) || '[]');
+          if (Array.isArray(arr)) arr.forEach(acc => { if (acc && acc.name) savedByName[acc.name.trim()] = acc; });
+        } catch(e){}
+      });
+    }
+    // 按下 DEFAULT_ACCOUNTS 顺序重建：保留各号已粘贴内容，移除已下线账号
+    DEFAULT_ACCOUNTS.forEach(a => {
+      const saved = savedByName[a.name.trim()];
+      const arts = [];
+      for (let i = 0; i < a.n; i++){
+        const s = saved && saved.articles && saved.articles[i];
+        arts.push({
+          title: '',
+          html: s ? (s.html || '') : '',
+          tailImg: s ? (s.tailImg || '') : ((a.tails && a.tails[i]) ? a.tails[i] : ''),
+          extraHtml: s ? (s.extraHtml || '') : ''
+        });
+      }
+      addAccount(a.name, arts);
+    });
+    applyDefaultTails();
+    relayout(); renumber(); updateEmpty();
+  })();
+</script>
+</body>
+</html>
